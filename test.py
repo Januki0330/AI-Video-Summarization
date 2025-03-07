@@ -1,13 +1,43 @@
-
+# test.py
 from pydub import AudioSegment
 import speech_recognition as sr
 from transformers import pipeline
+import yt_dlp
+import os
+
+def download_youtube_audio(url, audio_output="youtube_audio.wav"):
+    """Download audio from a YouTube URL and save as WAV."""
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'wav',
+            'preferredquality': '192',
+        }],
+        'outtmpl': 'temp_audio.%(ext)s',  # Temporary file
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+        # Convert temp file to final output
+        audio = AudioSegment.from_file("temp_audio.wav")
+        audio.export(audio_output, format="wav")
+        os.remove("temp_audio.wav")  # Clean up temp file
+        return audio_output
+    except Exception as e:
+        raise Exception(f"Failed to download YouTube audio: {str(e)}")
 
 def extract_audio_from_video(video_path, audio_output="output.wav"):
-    """Extract audio from a video file and save as WAV."""
-    audio = AudioSegment.from_file(video_path, format="mp4")
-    audio.export(audio_output, format="wav")
-    return audio_output
+    """Extract audio from a local video file or YouTube URL and save as WAV."""
+    if video_path.startswith("http://") or video_path.startswith("https://"):
+        return download_youtube_audio(video_path, audio_output)
+    else:
+        try:
+            audio = AudioSegment.from_file(video_path, format="mp4")
+            audio.export(audio_output, format="wav")
+            return audio_output
+        except Exception as e:
+            raise Exception(f"Failed to process local file: {str(e)}")
 
 def audio_to_text(audio_file):
     """Convert audio file to text using Google's API."""
@@ -46,7 +76,7 @@ def generate_quiz(summary):
 
 if __name__ == "__main__":
     # Test the module standalone
-    video_path = "sample_video.mp4"
+    video_path = "https://www.youtube.com/watch?v=Cu3R5it4cQs"  # Example YouTube URL
     audio_file = extract_audio_from_video(video_path)
     text = audio_to_text(audio_file)
     summary = summarize_text(text)
