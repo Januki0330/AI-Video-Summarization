@@ -82,6 +82,18 @@ def save_to_pdf():
         transcript_text.insert(tk.END, "\nSaved to PDF!")
         update_scroll_region()
 
+def refresh_ui():
+    """Reset the UI to its initial state."""
+    transcript_text.delete(1.0, tk.END)
+    summary_text.delete(1.0, tk.END)
+    for widget in quiz_frame.winfo_children()[1:]:
+        widget.destroy()
+    video_label.config(text="No video selected")
+    url_entry.delete(0, tk.END)
+    process_button.config(state="disabled")
+    quiz_question.config(text="")
+    update_scroll_region()
+
 def update_ui_from_queue():
     while not update_queue.empty():
         action, *args = update_queue.get()
@@ -99,7 +111,7 @@ def update_ui_from_queue():
             for widget in quiz_frame.winfo_children()[1:]:
                 widget.destroy()
             for opt in quiz["options"]:
-                rb = tk.Radiobutton(quiz_frame, text=opt, variable=quiz_var, value=opt[0], command=check_answer, font=("Helvetica", 12), bg="#e0e0e0", fg="#333333")
+                rb = tk.Radiobutton(quiz_frame, text=opt, variable=quiz_var, value=opt[0], command=check_answer, font=("Helvetica", 12), bg="#333333", fg="#E0E0E0", selectcolor="#555555")
                 rb.pack(anchor="w")
             update_scroll_region()
         elif action == "error":
@@ -125,36 +137,43 @@ def update_scroll_region():
 window = tk.Tk()
 window.title("Video Summarizer & Quiz Generator")
 window.geometry("1000x600")
-window.configure(bg="#e0e0e0")
+window.configure(bg="#333333")  # Dark background
 
-main_frame = tk.Frame(window, bg="#e0e0e0")
+main_frame = tk.Frame(window, bg="#333333")
 main_frame.pack(fill="both", expand=True)
 
-canvas = tk.Canvas(main_frame, bg="#e0e0e0")
+canvas = tk.Canvas(main_frame, bg="#333333")
 scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
 canvas.configure(yscrollcommand=scrollbar.set)
 scrollbar.pack(side="right", fill="y")
 canvas.pack(side="left", fill="both", expand=True)
 
-content_frame = tk.Frame(canvas, bg="#e0e0e0")
+content_frame = tk.Frame(canvas, bg="#333333")
 canvas.create_window((0, 0), window=content_frame, anchor="nw")
 
+# Styling for dark theme
+style = ttk.Style()
+style.theme_use('clam')
+style.configure("TButton", font=("Helvetica", 10), padding=5, background="#555555", foreground="#E0E0E0")
+style.configure("TLabel", font=("Helvetica", 12), background="#333333", foreground="#E0E0E0")
+style.configure("TProgressbar", background="#555555", troughcolor="#333333")
+
 # Input Section
-input_frame = tk.Frame(content_frame, bg="#e0e0e0", padx=10, pady=10, relief="groove", borderwidth=2)
+input_frame = tk.Frame(content_frame, bg="#333333", padx=10, pady=10, relief="groove", borderwidth=2)
 input_frame.pack(fill="x", pady=5)
-tk.Label(input_frame, text="Step 1: Select a Video or Enter YouTube URL", font=("Helvetica", 14, "bold"), bg="#e0e0e0").pack(pady=5)
+tk.Label(input_frame, text="Step 1: Select a Video or Enter YouTube URL", font=("Helvetica", 14, "bold"), bg="#333333", fg="#E0E0E0").pack(pady=5)
 select_button = ttk.Button(input_frame, text="Browse Local File", command=select_video)
 select_button.pack()
-url_frame = tk.Frame(input_frame, bg="#e0e0e0")
+url_frame = tk.Frame(input_frame, bg="#333333")
 url_frame.pack(pady=5)
-tk.Label(url_frame, text="YouTube URL:", bg="#e0e0e0").pack(side=tk.LEFT)
-url_entry = tk.Entry(url_frame, width=50, font=("Helvetica", 12))
+tk.Label(url_frame, text="YouTube URL:", bg="#333333", fg="#E0E0E0").pack(side=tk.LEFT)
+url_entry = tk.Entry(url_frame, width=50, font=("Helvetica", 12), bg="#555555", fg="#E0E0E0", insertbackground="#E0E0E0")
 url_entry.pack(side=tk.LEFT, padx=5)
 url_button = ttk.Button(url_frame, text="Use URL", command=use_url)
 url_button.pack(side=tk.LEFT)
-video_label = tk.Label(input_frame, text="No video selected", bg="#e0e0e0", font=("Helvetica", 12))
+video_label = tk.Label(input_frame, text="No video selected", bg="#333333", fg="#E0E0E0", font=("Helvetica", 12))
 video_label.pack(pady=5)
-tk.Label(input_frame, text="Summary Style", font=("Helvetica", 14, "bold"), bg="#e0e0e0").pack()
+tk.Label(input_frame, text="Summary Style", font=("Helvetica", 14, "bold"), bg="#333333", fg="#E0E0E0").pack()
 style_var = tk.StringVar(value="concise")
 style_menu = ttk.OptionMenu(input_frame, style_var, "concise", "detailed")
 style_menu.pack(pady=5)
@@ -163,23 +182,27 @@ process_button.pack(pady=10)
 progress = ttk.Progressbar(input_frame, length=300, mode="indeterminate")
 progress.pack(pady=5)
 
+# Refresh Button
+refresh_button = ttk.Button(input_frame, text="Refresh", command=refresh_ui)
+refresh_button.pack(pady=5)
+
 # Output Sections
-transcript_frame = tk.Frame(content_frame, bg="#e0e0e0", padx=10, pady=10, relief="groove", borderwidth=2)
+transcript_frame = tk.Frame(content_frame, bg="#333333", padx=10, pady=10, relief="groove", borderwidth=2)
 transcript_frame.pack(fill="x", pady=5)
-tk.Label(transcript_frame, text="Transcript", font=("Helvetica", 14, "bold"), bg="#e0e0e0").pack()
-transcript_text = scrolledtext.ScrolledText(transcript_frame, width=80, height=10, font=("Helvetica", 12))
+tk.Label(transcript_frame, text="Transcript", font=("Helvetica", 14, "bold"), bg="#333333", fg="#E0E0E0").pack()
+transcript_text = scrolledtext.ScrolledText(transcript_frame, width=80, height=10, font=("Helvetica", 12), bg="#555555", fg="#E0E0E0", insertbackground="#E0E0E0")
 transcript_text.pack(fill="x")
 
-summary_frame = tk.Frame(content_frame, bg="#e0e0e0", padx=10, pady=10, relief="groove", borderwidth=2)
+summary_frame = tk.Frame(content_frame, bg="#333333", padx=10, pady=10, relief="groove", borderwidth=2)
 summary_frame.pack(fill="x", pady=5)
-tk.Label(summary_frame, text="Summary", font=("Helvetica", 14, "bold"), bg="#e0e0e0").pack()
-summary_text = scrolledtext.ScrolledText(summary_frame, width=80, height=5, font=("Helvetica", 12))
+tk.Label(summary_frame, text="Summary", font=("Helvetica", 14, "bold"), bg="#333333", fg="#E0E0E0").pack()
+summary_text = scrolledtext.ScrolledText(summary_frame, width=80, height=5, font=("Helvetica", 12), bg="#555555", fg="#E0E0E0", insertbackground="#E0E0E0")
 summary_text.pack(fill="x")
 
-quiz_frame = tk.Frame(content_frame, bg="#e0e0e0", padx=10, pady=10, relief="groove", borderwidth=2)
+quiz_frame = tk.Frame(content_frame, bg="#333333", padx=10, pady=10, relief="groove", borderwidth=2)
 quiz_frame.pack(fill="x", pady=5)
-tk.Label(quiz_frame, text="Quiz", font=("Helvetica", 14, "bold"), bg="#e0e0e0").pack()
-quiz_question = tk.Label(quiz_frame, text="", wraplength=700, justify="left", bg="#e0e0e0", font=("Helvetica", 12))
+tk.Label(quiz_frame, text="Quiz", font=("Helvetica", 14, "bold"), bg="#333333", fg="#E0E0E0").pack()
+quiz_question = tk.Label(quiz_frame, text="", wraplength=700, justify="left", bg="#333333", fg="#E0E0E0", font=("Helvetica", 12))
 quiz_question.pack()
 quiz_var = tk.StringVar()
 quiz_answer = ""
